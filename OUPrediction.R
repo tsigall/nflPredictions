@@ -44,8 +44,8 @@ pbp <- nflfastR::load_pbp(1999:2021, qs = TRUE) %>%
          epa)
 
 #filters
-pbpFilter <- pbp #%>%
-#filter(down < 4, qtr < 4) 
+pbpFilter <- pbp %>%
+  filter(down < 4, qtr < 4, half_seconds_remaining > 120) 
 
 
 #Select stats used for the model and group by offense and defense
@@ -96,7 +96,7 @@ pg_offense <- offense[,c(1:3,9:13)]
 rawModelData <- inner_join(pg_offense, pg_defense, by = c('season', 'week', 'posteam' = 'defteam'))
 
 #Combine data with schedule
-modelData <- games2[,c(2, 4, 8, 10, 14, 46, 29)]
+modelData <- games2[,c(2, 4, 8, 10, 14, 46, 29, 22, 23)]
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'away_team' = 'posteam'))
 modelData <- modelData %>%
   rename(
@@ -133,6 +133,8 @@ model <- lm(total ~
               a_drya +
               a_opya +
               a_dpya +
+              a_ofum +
+              a_dfum +
               a_oepa +
               h_drya +
               h_opya +
@@ -151,17 +153,15 @@ results<-transform(results,'Result'=ifelse(Predicted>0, Actual-OU, 0))
 results<-transform(results,'Win'=ifelse(Bet*Result>0,1,0))
 final<-data.frame(Margin = c('All','3','5','7','10'),
                   Win = c(sum(results$Win == 1),
-                          sum(results$Win == 1 & results$Bet > 3),
-                          sum(results$Win == 1 & results$Bet > 5),
-                          sum(results$Win == 1 & results$Bet > 7),
-                          sum(results$Win == 1 & results$Bet > 10)),
+                          sum(results$Win == 1 & (results$Bet > 3 | results $Bet < -3)),
+                          sum(results$Win == 1 & (results$Bet > 5 | results $Bet < -5)),
+                          sum(results$Win == 1 & (results$Bet > 7 | results $Bet < -7)),
+                          sum(results$Win == 1 & (results$Bet > 10 | results $Bet < -10))),
                   Lose = c(sum(results$Win == 0),
-                           sum(results$Win == 0 & results$Bet > 3),
-                           sum(results$Win == 0 & results$Bet > 5),
-                           sum(results$Win == 0 & results$Bet > 7),
-                           sum(results$Win == 0 & results$Bet > 10)))
+                           sum(results$Win == 0 & (results$Bet > 3 | results $Bet < -3)),
+                           sum(results$Win == 0 & (results$Bet > 5 | results $Bet < -5)),
+                           sum(results$Win == 0 & (results$Bet > 7 | results $Bet < -7)),
+                           sum(results$Win == 0 & (results$Bet > 10 | results $Bet < -10))))
 final<-transform(final,'Total'=ifelse(Win>-1,Win+Lose,0))
 final<-transform(final,'Pct.'=ifelse(Win>-1,Win/Total*100))
 final
-
-
