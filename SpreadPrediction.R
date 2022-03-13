@@ -96,7 +96,7 @@ pg_offense <- offense[,c(1:3,9:13)]
 rawModelData <- inner_join(pg_offense, pg_defense, by = c('season', 'week', 'posteam' = 'defteam'))
 
 #Combine data with schedule
-modelData <- games2[,c(2, 4, 8, 10, 14, 46, 29, 13, 26)]
+modelData <- games[,c(2, 4, 8, 10, 14, 45, 29, 13, 26)]
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'away_team' = 'posteam'))
 modelData <- modelData %>%
   rename(
