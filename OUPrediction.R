@@ -41,7 +41,9 @@ pbp <- nflfastR::load_pbp(1999:2021, qs = TRUE) %>%
          pass_attempt,
          fumble, 
          interception,
-         epa)
+         epa,
+         qb_epa,
+         cpoe)
 
 #filters
 pbpFilter <- pbp %>%
@@ -55,7 +57,9 @@ offense <- pbpFilter %>%
                    off_pya = sum(passing_yards, na.rm = TRUE)/sum(pass_attempt, na.rm = TRUE), 
                    off_fum = sum(fumble, na.rm = TRUE),  
                    off_int = sum(interception, na.rm = TRUE),
-                   off_epa = mean(epa, na.rm = TRUE)) %>%
+                   off_epa = mean(epa, na.rm = TRUE),
+                   off_qepa = mean(qb_epa),
+                   off_cpoe = mean(cpoe, na.rm = T)) %>%
   group_by(posteam)%>%
   mutate(
     pw_orya = rollmean(off_rya, 10,  na.pad =TRUE, align='right'),
@@ -67,7 +71,11 @@ offense <- pbpFilter %>%
     pw_oint = rollmean(off_int, 10,  na.pad =TRUE, align='right'),
     pw_oint = lag(pw_oint),
     pw_oepa = rollmean(off_epa, 10,  na.pad =TRUE, align='right'),
-    pw_oepa = lag(pw_oepa)
+    pw_oepa = lag(pw_oepa),
+    pw_oqepa = rollmean(off_qepa, 10,  na.pad =TRUE, align='right'),
+    pw_oqepa = lag(pw_oqepa),
+    pw_ocpoe = rollmean(off_cpoe, 10,  na.pad =TRUE, align='right'),
+    pw_ocpoe = lag(pw_ocpoe)
   )
 defense <- pbpFilter %>%
   dplyr::group_by(defteam, season, week) %>%
@@ -75,7 +83,9 @@ defense <- pbpFilter %>%
                    def_pya = sum(passing_yards, na.rm = TRUE)/sum(pass_attempt, na.rm = TRUE), 
                    def_fum = sum(fumble, na.rm = TRUE),  
                    def_int = sum(interception, na.rm = TRUE),
-                   def_epa = mean(epa, na.rm = TRUE)) %>%
+                   def_epa = mean(epa, na.rm = TRUE),
+                   def_qepa = mean(qb_epa),
+                   def_cpoe = mean(cpoe, na.rm = T)) %>%
   group_by(defteam)%>%
   mutate(
     pw_drya = rollmean(def_rya, 10,  na.pad =TRUE, align='right'),
@@ -87,16 +97,50 @@ defense <- pbpFilter %>%
     pw_dint = rollmean(def_int, 10,  na.pad =TRUE, align='right'),
     pw_dint = lag(pw_dint),
     pw_depa = rollmean(def_epa, 10,  na.pad =TRUE, align='right'),
-    pw_depa = lag(pw_depa)
+    pw_depa = lag(pw_depa),
+    pw_dqepa = rollmean(def_qepa, 10,  na.pad =TRUE, align='right'),
+    pw_dqepa = lag(pw_dqepa),
+    pw_dcpoe = rollmean(def_cpoe, 10,  na.pad =TRUE, align='right'),
+    pw_dcpoe = lag(pw_dcpoe)
   )
 
 #Combine offense and defense data
-pg_defense <- defense[,c(1:3,9:13)]
-pg_offense <- offense[,c(1:3,9:13)]
+pg_defense <- defense %>% 
+  select(defteam,
+         season,
+         week,
+         pw_drya,
+         pw_dpya,
+         pw_dfum,
+         pw_dint,
+         pw_depa,
+         pw_dqepa,
+         pw_dcpoe)
+pg_offense <- offense %>% 
+  select(posteam,
+         season,
+         week,
+         pw_orya,
+         pw_opya,
+         pw_ofum,
+         pw_oint,
+         pw_oepa,
+         pw_oqepa,
+         pw_ocpoe)
 rawModelData <- inner_join(pg_offense, pg_defense, by = c('season', 'week', 'posteam' = 'defteam'))
 
 #Combine data with schedule
+<<<<<<< Updated upstream
 modelData <- games2[,c(2, 4, 8, 10, 14, 46, 29, 22, 23)]
+=======
+modelData <- games %>%
+  select(season,
+         week,
+         away_team,
+         home_team,
+         total,
+         total_line)
+>>>>>>> Stashed changes
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'away_team' = 'posteam'))
 modelData <- modelData %>%
   rename(
@@ -109,7 +153,11 @@ modelData <- modelData %>%
     a_oint = pw_oint,
     a_dint = pw_dint,
     a_oepa = pw_oepa,
-    a_depa = pw_depa
+    a_depa = pw_depa,
+    a_oqepa = pw_oqepa,
+    a_dqepa = pw_dqepa,
+    a_ocpoe = pw_ocpoe,
+    a_dcpoe = pw_dcpoe
   )
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'home_team' = 'posteam'))
 modelData <- modelData %>%
@@ -123,7 +171,11 @@ modelData <- modelData %>%
     h_oint = pw_oint,
     h_dint = pw_dint,
     h_oepa = pw_oepa,
-    h_depa = pw_depa
+    h_depa = pw_depa,
+    h_oqepa = pw_oqepa,
+    h_dqepa = pw_dqepa,
+    h_ocpoe = pw_ocpoe,
+    h_dcpoe = pw_dcpoe
   ) %>%
   ungroup() %>%
   na.omit()
@@ -135,18 +187,18 @@ model <- lm(total ~
               a_dpya +
               a_ofum +
               a_dfum +
-              a_oepa +
+              a_oqepa +
               h_drya +
               h_opya +
               h_dpya +
               h_ofum +
               h_dfum +
-              h_oepa,
+              h_oqepa,
             data = modelData)
 
 #Test multiple regression
-predictions<-predict(object=model, modelData[,c(7:27)])
-results<-data.frame(predictions, modelData[,5], abs(predictions - modelData[,5]), modelData[,7])
+predictions<-predict(object=model, modelData[])
+results<-data.frame(predictions, modelData[,5], abs(predictions - modelData[,5]), modelData[,6])
 names(results)<-c('Predicted','Actual','Error', 'OU')
 results<-transform(results,'Bet'= ifelse(Predicted>0, Predicted-OU, 0))
 results<-transform(results,'Result'=ifelse(Predicted>0, Actual-OU, 0))
