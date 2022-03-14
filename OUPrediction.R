@@ -130,9 +130,7 @@ pg_offense <- offense %>%
 rawModelData <- inner_join(pg_offense, pg_defense, by = c('season', 'week', 'posteam' = 'defteam'))
 
 #Combine data with schedule
-<<<<<<< Updated upstream
-modelData <- games2[,c(2, 4, 8, 10, 14, 46, 29, 22, 23)]
-=======
+
 modelData <- games %>%
   select(season,
          week,
@@ -140,7 +138,6 @@ modelData <- games %>%
          home_team,
          total,
          total_line)
->>>>>>> Stashed changes
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'away_team' = 'posteam'))
 modelData <- modelData %>%
   rename(
