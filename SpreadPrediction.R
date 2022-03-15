@@ -179,15 +179,11 @@ modelData <- modelData %>%
 #Fit to a lm model
 spreadModel <- lm(result ~
                     a_oqepa +
-                    a_dqepa + 
-                    a_ocpoe +
-                    a_dcpoe +
+                    a_dqepa +
                     h_oqepa +
-                    h_dqepa +
-                    h_ocpoe +
-                    h_dcpoe,
+                    h_dqepa,
                   data = modelData)
-
+summary(spreadModel)
 #Test multiple regression
 predictions<-predict(object=spreadModel, modelData[])
 results<-data.frame(predictions, modelData[,5], modelData[,6])
