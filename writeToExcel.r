@@ -1,12 +1,23 @@
-#Write results to excel file
-resultsExtended <- data.frame(modelData[,c(1:6)], modelData[,c(10,11,13:14,20,21,23:26)], predictions, modelData[,5], modelData[,7])
-names(resultsExtended)[17:19] <- c('Predicted', 'Actual', 'Spread')
+#for spread model
+resultsExtended <- modelData %>%
+  select(season,
+         week,
+         away_team,
+         home_team,
+         a_oqepa,
+         a_dqepa,
+         h_oqepa,
+         h_dqepa,
+         Actual = result,
+         Spread = spread_line) %>%
+  mutate(
+    Predicted = predictions
+  )
 resultsExtended <- resultsExtended %>% mutate(
   Bet = Predicted - Spread,
-  Result = Actual - Spread
+  Result = Actual - Spread,
+  Win = if_else(Bet*Result>0,1,0)
 )
-resultsExtended<-transform(resultsExtended,'Win'=ifelse(Bet*Result>0,1,0))
-
 write.xlsx2(resultsExtended, "C:\\Users\\Thoma\\OneDrive - Friends and Family Dogfood sigall.org\\Examining Results.xlsx", sheetName = "Data",
             col.names = TRUE, row.names = TRUE, append = FALSE)
 
@@ -23,17 +34,18 @@ resultsExtended <- modelData %>%
            h_dpya,
            h_ofum,
            h_dfum,
-           h_oqepa) %>%
+           h_oqepa,
+           Actual = result,
+           Spread = spread_line) %>%
   mutate(
-    Predicted = predictions,
-    Actual = modelData[,5],
-    Spread = modelData[,6]
+    Predicted = predictions
   )
 resultsExtended <- resultsExtended %>% mutate(
-  Bet = Predicted - Spread.total_line,
-  Result = Actual.total - Spread.total_line
+  Bet = Predicted - Spread,
+  Result = Actual - Spread,
+  Win = if_else(Bet*Result>0,1,0),
+  Win = if_else(Actual == Spread & Win == 0, 0.5, Win)
 )
-resultsExtended<-transform(resultsExtended,'Win'=ifelse(Bet*Result>0,1,0))
-
 write.xlsx2(resultsExtended, "C:\\Users\\Thoma\\OneDrive - Friends and Family Dogfood sigall.org\\Examining Results.xlsx", sheetName = "Data",
             col.names = TRUE, row.names = TRUE, append = FALSE)
+
