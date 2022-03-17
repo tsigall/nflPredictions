@@ -136,7 +136,8 @@ modelData <- games %>%
          away_team,
          home_team,
          result,
-         spread_line)
+         spread_line,
+         total_line)
 modelData <- left_join(modelData, rawModelData, by = c('season', 'week', 'away_team' = 'posteam'))
 modelData <- modelData %>%
   rename(
@@ -177,11 +178,13 @@ modelData <- modelData %>%
   na.omit()
 
 #Fit to a lm model
+for(x in 1:1)
 spreadModel <- lm(result ~
                     a_oqepa +
                     a_dqepa +
                     h_oqepa +
-                    h_dqepa,
+                    h_dqepa +
+                    h_opya,
                   data = modelData)
 summary(spreadModel)
 #Test multiple regression
@@ -190,8 +193,11 @@ results<-data.frame(predictions, modelData[,5], modelData[,6])
 names(results)<-c('Predicted','Actual', 'Spread')
 results <- results %>% mutate(
   Bet = Predicted - Spread,
-  Result = Actual - Spread
+  Result = Actual - Spread,
+  Error = abs(Predicted - Actual)
 )
+mean(results$Error)
+
 results<-transform(results,'Win'=ifelse(Bet*Result>0,1,0))
 final<-data.frame(Margin = c('All','3','5','7','10'),
                   Win = c(sum(results$Win == 1),
