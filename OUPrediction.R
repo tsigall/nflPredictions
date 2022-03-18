@@ -24,7 +24,7 @@ games <- games %>%
       TRUE ~ home_team
     )
   )
-pbp <- nflfastR::load_pbp(1999:2021, qs = TRUE) %>%
+pbp <- nflfastR::load_pbp(2006:2021, qs = TRUE) %>%
   dplyr::filter(season_type == "REG") %>%
   dplyr::filter(!is.na(posteam) & (rush == 1 | pass == 1)) %>%
   select(posteam,
@@ -90,8 +90,8 @@ qbData <- qbData %>%
       AY.A
     )
 #filters
-pbpFilter <- pbp %>%
-  filter(season > 2016) 
+pbpFilter <- pbp #%>%
+  #filter(season > 2016) 
 
 
 #Select stats used for the model and group by offense and defense
@@ -351,9 +351,9 @@ model <- lm(total ~
               h_dcpoe,
             data = modelData)
 summary(model)
-
+ols_step_both_p(model, details = TRUE, penter=0.2, prem=0.20)
 #Test multiple regression
-predictions<-predict(object=model, modelData[])
+predictions<-predict(object=stepwise.model, modelData[])
 results<-data.frame(predictions, modelData[,5], abs(predictions - modelData[,5]), modelData[,6])
 names(results)<-c('Predicted','Actual','Error', 'OU')
 results<-transform(results,'Bet'= ifelse(Predicted>0, Predicted-OU, 0))

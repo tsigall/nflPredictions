@@ -24,7 +24,7 @@ games <- games %>%
       TRUE ~ home_team
     )
   )
-pbp <- nflfastR::load_pbp(1999:2021, qs = TRUE) %>%
+pbp <- nflfastR::load_pbp(2017:2021, qs = TRUE) %>%
   dplyr::filter(season_type == "REG") %>%
   dplyr::filter(!is.na(posteam) & (rush == 1 | pass == 1)) %>%
   select(posteam,
