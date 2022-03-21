@@ -90,8 +90,8 @@ qbData <- qbData %>%
       AY.A
     )
 #filters
-pbpFilter <- pbp #%>%
-  #filter(season > 2016) 
+pbpFilter <- pbp %>%
+  filter(season > 2016) 
 
 
 #Select stats used for the model and group by offense and defense
@@ -352,6 +352,8 @@ model <- lm(total ~
             data = modelData)
 summary(model)
 ols_step_both_p(model, details = TRUE, penter=0.2, prem=0.20)
+stepModel <- lm(total ~ h_oaya + a_otd + h_ocpoe, data = modelData)
+summary(stepModel)
 #Test multiple regression
 predictions<-predict(object=stepwise.model, modelData[])
 results<-data.frame(predictions, modelData[,5], abs(predictions - modelData[,5]), modelData[,6])
