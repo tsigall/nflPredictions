@@ -10,4 +10,4 @@ makePred <- function(Season, Week){
 }
 
 
-makePred(2022, 4)
+makePred(2023, 4)
